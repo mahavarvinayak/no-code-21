@@ -1,0 +1,51 @@
+services:
+  # Frontend (Next.js)
+  - type: web
+    name: vibecode-frontend
+    env: node
+    buildCommand: cd frontend && npm install && npm run build
+    startCommand: cd frontend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_API_URL
+        fromService:
+          type: web
+          name: vibecode-backend
+          property: host
+
+  # Backend API (Node.js)
+  - type: web
+    name: vibecode-backend
+    env: node
+    buildCommand: cd backend && npm install && npm run build
+    startCommand: cd backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: vibecode-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: OPENAI_API_KEY
+        sync: false  # Add manually in Render dashboard
+
+  # AI Service (Python)
+  - type: web
+    name: vibecode-ai
+    env: python
+    buildCommand: cd ai && pip install -r requirements.txt
+    startCommand: cd ai && python -m uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false  # Add manually in Render dashboard
+      - key: ANTHROPIC_API_KEY
+        sync: false  # Add manually in Render dashboard
+
+# Database
+databases:
+  - name: vibecode-db
+    databaseName: vibecode
+    user: vibecode_user
